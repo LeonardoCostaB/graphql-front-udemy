@@ -1,3 +1,4 @@
+// @ts-nocheck
 import P from 'prop-types';
 import * as Styled from './styles';
 import { Heading } from 'components/Heading';
@@ -8,16 +9,30 @@ import { GQL_POSTS } from 'graphql/queries/post';
 import { Loading } from 'components/Loading';
 import { DefaultError } from 'components/DefaultError';
 import { FormButton } from 'components/FormButton';
+import { useAuthVar } from 'graphql/reactive-var/auth';
 
 export const Home = () => {
-  const { loading, error, data } = useQuery(GQL_POSTS);
+  const authVar = useAuthVar();
 
-  if (loading) return <Loading loading={loading} />;
+  const { loading, error, data, fetchMore, previousData } = useQuery(
+    GQL_POSTS,
+    {
+      notifyOnNetworkStatusChange: true,
+    },
+  );
+
+  if (loading && !previousData) return <Loading loading={loading} />;
   if (error) return <DefaultError error={error} />;
   if (!data) return null;
 
   const handleLoadMore = async () => {
-    console.log('loading more');
+    if (!Array.isArray(data?.posts)) return;
+
+    await fetchMore({
+      variables: {
+        start: data.posts.length,
+      },
+    });
   };
 
   return (
@@ -39,13 +54,16 @@ export const Home = () => {
               body={post.body}
               user={post.user}
               createdAt={post.createdAt}
+              loggedUserId={authVar.userId}
             />
           );
         })}
       </Styled.PostsContainer>
 
       <Styled.Container>
-        <FormButton clickedFn={handleLoadMore}>Load More</FormButton>
+        <FormButton clickedFn={handleLoadMore} disabled={loading}>
+          Load More
+        </FormButton>
       </Styled.Container>
     </>
   );
