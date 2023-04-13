@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet';
-import { useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -12,6 +12,8 @@ import { DefaultError } from 'components/DefaultError';
 
 import { useAuthVar } from 'graphql/reactive-var/auth';
 import { GQL_POST } from 'graphql/queries/post';
+import { GQL_CREATE_COMMENT } from 'graphql/mutations/comment';
+import { GQL_FRAGMENT_COMMENT } from 'graphql/fragments/comment';
 
 export const PostDetails = () => {
   const authVar = useAuthVar();
@@ -21,12 +23,42 @@ export const PostDetails = () => {
       id,
     },
   });
+  const [createComment] = useMutation(GQL_CREATE_COMMENT, {
+    update: (cache, { data }) => {
+      const postId = cache.identify({ __typename: 'Post', id: post.id });
+
+      cache.modify({
+        id: postId,
+        fields: {
+          comments: (existing) => {
+            const commentRef = cache.writeFragment({
+              fragment: GQL_FRAGMENT_COMMENT,
+              data: data.createComment,
+            });
+
+            return [...existing, commentRef];
+          },
+        },
+      });
+    },
+  });
 
   if (loading) return <Loading loading={loading} />;
   if (error) return <DefaultError error={error} />;
 
   const post = data?.post;
   if (!post) return null;
+
+  async function handleCreateComment(comment) {
+    await createComment({
+      variables: {
+        data: {
+          comment: comment,
+          postId: post.id,
+        },
+      },
+    });
+  }
 
   return (
     <>
@@ -54,9 +86,7 @@ export const PostDetails = () => {
         );
       })}
 
-      <CommentForm
-        handleSubmit={(comment) => toast.success(`Your comment is: ${comment}`)}
-      />
+      <CommentForm handleSubmit={handleCreateComment} />
     </>
   );
 };
