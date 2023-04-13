@@ -1,8 +1,10 @@
+import { useMutation } from '@apollo/client';
 import { Delete, Edit } from '@styled-icons/material-outlined';
 import { DangerousHtml } from 'components/DangerousHtml';
 import { DefaultError } from 'components/DefaultError';
 import { FormButton } from 'components/FormButton';
 import { Loading } from 'components/Loading';
+import { GQL_DELETE_POST } from 'graphql/mutations/post';
 import P from 'prop-types';
 import { useRef } from 'react';
 import { Link, useHistory } from 'react-router-dom';
@@ -29,6 +31,32 @@ export const Post = ({
 }) => {
   const ref = useRef();
   const history = useHistory();
+  const [deletePost] = useMutation(GQL_DELETE_POST, {
+    variables: {
+      postId: id,
+    },
+    update(cache) {
+      cache.modify({
+        fields: {
+          posts(existing, { readField }) {
+            return existing.filter((postRef) => {
+              const refId = readField('id', postRef);
+
+              return refId !== id;
+            });
+          },
+        },
+      });
+    },
+  });
+
+  const handleDelete = async () => {
+    const shouldDelete = confirm('Are you sure you want to delete this post?');
+
+    if (!shouldDelete) return;
+
+    deletePost();
+  };
 
   if (loading) return <Loading loading={loading} />;
   if (error) return <DefaultError error={error} />;
@@ -60,7 +88,7 @@ export const Post = ({
               buttonSize="small"
               icon={<Delete />}
               bgColor="secondary"
-              clickedFn={() => false}
+              clickedFn={handleDelete}
               iconOnly
               outlined
             />
