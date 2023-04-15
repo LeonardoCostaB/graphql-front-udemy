@@ -13,7 +13,7 @@ export const CommentForm = ({ handleSubmit, buttonDisabled = false }) => {
     e.preventDefault();
 
     if (handleSubmit) {
-      handleSubmit(comment);
+      handleSubmit(comment, () => setComment(''));
     }
   };
 
@@ -26,8 +26,14 @@ export const CommentForm = ({ handleSubmit, buttonDisabled = false }) => {
             label="Comment"
             id="commentBody"
             changeFn={(v) => setComment(v)}
+            textValue={comment}
+            disabled={buttonDisabled}
           />
-          <FormButton type="submit" icon={<Send />} disabled={buttonDisabled}>
+          <FormButton
+            type="submit"
+            icon={<Send />}
+            disabled={buttonDisabled || comment.length <= 5}
+          >
             Send comment
           </FormButton>
         </Styled.Form>
