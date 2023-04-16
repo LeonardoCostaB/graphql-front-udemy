@@ -17,6 +17,8 @@ export const Home = () => {
   const { loading, error, data, fetchMore, previousData } = useQuery(
     GQL_POSTS,
     {
+      onError: () => {},
+      errorPolicy: 'all',
       notifyOnNetworkStatusChange: true,
     },
   );
