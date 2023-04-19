@@ -11,7 +11,7 @@ export const Footer = () => {
           title="Conheça os cursos"
           target="_blank"
         >
-          <span>&lt;Dev&gt;</span>Otávio Miranda
+          <span>&lt;Dev&gt;</span>Leonardo Costa
           <span>&lt;/Dev&gt;</span>
         </a>
       </div>
